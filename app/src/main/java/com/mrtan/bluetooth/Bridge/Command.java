@@ -45,13 +45,7 @@ public class Command {
     }
 
     public void commandData(String str, commandType theCommand, byte[] bArr) {
-        System.out.println("---[Bluetooth CommandData]---");
-        System.out.println("str = " + str);
-        System.out.println("command = " + theCommand);
-        System.out.println("bArr = " + Arrays.toString(bArr));
-        System.out.println("-----------------------------");
         check();
-
         commandData(this.handler, str, theCommand.getValue(), bArr);
     }
 
@@ -84,10 +78,7 @@ public class Command {
     }
 
     public void receiveData(String str, byte[] bArr) {
-        System.out.println("---[Bluetooth ReceiveData]---");
-        System.out.println("str = " + str);
-        System.out.println("bArr = " + Arrays.toString(bArr));
-        System.out.println("-----------------------------");
+        System.out.println("ReceiveData : "+str+" "+ Arrays.toString(bArr));
         check();
         receiveData(this.handler, str, bArr);
     }
