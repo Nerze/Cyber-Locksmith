@@ -27,7 +27,8 @@ public class NetworkHandler implements okhttp3.Callback, com.example.myapplicati
     private static final byte[] KEY="tprjrA5kkKyvh4nw".getBytes();
     public Command control;
 
-    private final int lockId=71891;
+    private int lockId=71891;
+    private boolean findingLockId=false;
     private String accessToken;
 
     @SuppressLint("GetInstance")
@@ -61,6 +62,7 @@ public class NetworkHandler implements okhttp3.Callback, com.example.myapplicati
     }
 
     private void challenge(String random){
+        findingLockId=true;
         Request request= new Request.Builder()
                 .url("https://consapi.tapplock.com/api/v1/common/generateKeyTL2?lockId="+ this.lockId+"&randNumber="+random)
                 .header("Authorization","Bearer "+this.accessToken)
@@ -91,10 +93,7 @@ public class NetworkHandler implements okhttp3.Callback, com.example.myapplicati
                     String strMess = this.decryptResponse(response);
                     this.accessToken = new JSONObject(strMess).getJSONObject("data").getString("accessToken");
                     System.out.println("Access Token : "+accessToken);
-                    byte[] received=new byte[]{};
-                    control.commandData(this.device.getAddress(),commandType.RANDOM,received);
-                    received = new byte[]{(byte) 0xaa, 0x55, 0x01, 0x03, 0x05, 0x00, 0x01, 0x06, (byte) 0xaa, (byte) 0xb5, 0x2d, (byte) 0x9b, 0x02};
-                    control.receiveData(device.getAddress(), received);
+                    this.getRandom();
                 }
                 else if (url.contains("/api/v1/common/generateKeyTL2")){
                     String strMess = this.decryptResponse(response);
@@ -118,6 +117,13 @@ public class NetworkHandler implements okhttp3.Callback, com.example.myapplicati
         } catch (IllegalBlockSizeException | BadPaddingException | JSONException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void getRandom() {
+        byte[] received=new byte[]{};
+        control.commandData(this.device.getAddress(),commandType.RANDOM,received);
+        received = new byte[]{(byte) 0xaa, 0x55, 0x01, 0x03, 0x05, 0x00, 0x01, 0x06, (byte) 0xaa, (byte) 0xb5, 0x2d, (byte) 0x9b, 0x02};
+        control.receiveData(device.getAddress(), received);
     }
 
     private void pair(){
@@ -162,6 +168,8 @@ public class NetworkHandler implements okhttp3.Callback, com.example.myapplicati
             this.challenge(data);
         }
         else if (code==8){
+            this.findingLockId=false;
+            System.out.println("Found the lock's id : "+this.lockId);
             this.pair();
         }
         else{
@@ -170,6 +178,10 @@ public class NetworkHandler implements okhttp3.Callback, com.example.myapplicati
             System.out.println("Code : "+code);
             System.out.println("Ret : "+returnValue);
             System.out.println("Data : "+ data);
+            if (this.findingLockId){
+                this.lockId++;
+                this.getRandom();
+            }
         }
 
     }
